@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.scripts]
-kickoff = "article_writer.main:kickoff"
+kickoff = "article_writer.main:app"
 plot = "article_writer.main:plot"
 
 [build-system]

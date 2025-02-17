@@ -1,45 +1,37 @@
-from crewai.flow.flow import start, listen, Flow
-from pydantic import BaseModel
+import streamlit as st
 from article_writer.crews.poem_crew.poem_crew import ArticleCrew
 from dotenv import load_dotenv
-import streamlit as st
+
 load_dotenv()
 
 
-class ArticleState(BaseModel):
-    topic : str = ""
-    article : str = ""
-
-class ArticleFlow(Flow[ArticleState]):
-
-    @start()
-    def topic(self):
-        print("Generating article topic")
-        self.state.topic = input("Enter topic: ")
-
-
-    @listen(topic)
-    def generate_article(self):
-        print("Generating article")
-        result = ArticleCrew().crew().kickoff(inputs={"topic": self.state.topic})
-
-        print("Article generated", result.raw)
-        self.state.article = result.raw
-
-    @listen(generate_article)
-    def save_article(self):
-        print("Saving article")
-        with open("article.md", "w") as f:
-            f.write(self.state.article)
-
-def kickoff():
-    flow = ArticleFlow()
-    flow.kickoff()
-
-def plot():
-    flow = ArticleFlow()
-    flow.plot()
+def app():
+    st.title("Article Generator")
+    st.write("Enter a topic to generate an article using CrewAI.")
+    
+    topic = st.text_input("Article Topic", "")
+    
+    if st.button("Generate Article"):
+        if not topic:
+            st.error("Please provide a topic!")
+        else:
+            with st.spinner("Generating article..."):
+                result = ArticleCrew().crew().kickoff(inputs={"topic": topic})
+                article = result.raw
+                st.session_state["article"] = article
+            st.success("Article generated successfully!")
+    
+    if "article" in st.session_state:
+        st.subheader("Generated Article")
+        st.write(st.session_state["article"])
+        
+        st.download_button(
+            label="Download Article",
+            data=st.session_state["article"],
+            file_name="article.md",
+            mime="text/markdown"
+        )
 
 
 if __name__ == "__main__":
-    kickoff()
+    app()
